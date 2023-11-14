@@ -1,33 +1,24 @@
-# Project
+# ALYMPICS: Language Agents Meet Game Theory
 
-> This repo has been populated by an initial template to help get you started. Please
-> make sure to update the content to build a great experience for community-building.
+**Alympics** is a platform that leverages Large Language Model (LLM) agents to facilitate investigations in game theory.
 
-As the maintainer of this project, please make a few updates:
+See our paper: [<font size=5>ALYMPICS: Language Agents Meet Game Theory</font>](https://arxiv.org/pdf/2311.03220)
 
-- Improving this README.MD file to provide a great experience
-- Updating SUPPORT.MD with content about this project's support experience
-- Understanding the security reporting process in SECURITY.MD
-- Remove this section from the README
+## Architecture of Alympics
 
-## Contributing
+<img src="./assets/playfround.png" alt="playground" width="800"/>
 
-This project welcomes contributions and suggestions.  Most contributions require you to agree to a
-Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
-the rights to use your contribution. For details, visit https://cla.opensource.microsoft.com.
+The architecture of Alympics comprises the Sandbox Playground and Players. The Sandbox Playground creates an environment where game settings, as specified by researchers, are executed. Agent players, along with the optional human players, actively engage in the game within this environment.
 
-When you submit a pull request, a CLA bot will automatically determine whether you need to provide
-a CLA and decorate the PR appropriately (e.g., status check, comment). Simply follow the instructions
-provided by the bot. You will only need to do this once across all repos using our CLA.
+- Sandbox Playground: The Sandbox Playground serves as the environment for conducting games, providing a versatile and controlled space for agent players interactions.
+- Agent Players: Agent Players constitute an indispensable component of the Alympics framework, embodying LLM-powered agent entities that participate in strategic interactions within the Sandbox Playground.
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
-For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
 
-## Trademarks
+## Contributions
 
-This project may contain trademarks or logos for projects, products, or services. Authorized use of Microsoft 
-trademarks or logos is subject to and must follow 
-[Microsoft's Trademark & Brand Guidelines](https://www.microsoft.com/en-us/legal/intellectualproperty/trademarks/usage/general).
-Use of Microsoft trademarks or logos in modified versions of this project must not cause confusion or imply Microsoft sponsorship.
-Any use of third-party trademarks or logos are subject to those third-party's policies.
+- The proposal of an original, LLM agent-based framework to facilitate game theory research.
+- The demonstration of Alympics’s application through a comprehensive pilot case study.
+- The emphasis on the significance of leveraging LLM agents to scrutinize strategic decision-making within a controlled and reproducible environment. This endeavor not only enriches the field of game theory but also has the potential to inspire research in other domains where decision-making assumes a pivotal role.
+
+## Code and Examples
+In progress, coming in the near future...
