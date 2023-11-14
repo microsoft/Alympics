@@ -6,7 +6,7 @@ See our paper: [<font size=5>ALYMPICS: Language Agents Meet Game Theory</font>](
 
 ## Architecture of Alympics
 
-<img src="./assets/playfround.png" alt="playground" width="800"/>
+<img src="./assets/playground.png" alt="playground" width="800"/>
 
 The architecture of Alympics comprises the Sandbox Playground and Players. The Sandbox Playground creates an environment where game settings, as specified by researchers, are executed. Agent players, along with the optional human players, actively engage in the game within this environment.
 
