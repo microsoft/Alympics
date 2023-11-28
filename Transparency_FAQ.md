@@ -26,7 +26,7 @@ This documentation is intended for researchers, developers, and enthusiasts in t
 - Use the platform's adjustable variables to tailor the simulation to specific research questions or hypotheses.
 
 ## Social Impact Statement
-ALYMPICS is designed to advance our understanding of AI's capabilities in strategic decision-making. While it offers valuable insights, we acknowledge the ethical considerations in deploying AI in real-world scenarios. We are committed to responsible research and development, ensuring that our work aligns with ethical guidelines and contributes positively to society.
+ALYMPICS is designed to advance our understanding of AI's capabilities in strategic decision-making. While it offers valuable insights, we acknowledge the ethical considerations in deploying AI in real-world scenarios. We are committed to responsible research and development, ensuring that our work aligns with ethical guidelines and contributes positively to society. Our work is for research purposes only, and further testing and validation would be needed to use it outside of a research context.
 
 ## Feedback and Collaboration
 We encourage feedback and collaboration from our audience. If you have suggestions, questions, or would like to contribute to the project, please contact us at Shaoguang.Mao@microsoft.com.
