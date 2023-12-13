@@ -6,7 +6,7 @@ See our paper: [<font size=5>ALYMPICS: Language Agents Meet Game Theory</font>](
 
 ## Architecture of Alympics
 
-<img src="./assets/gameground.png" alt="playground" width="800"/>
+<img src="./assets/playground.png" alt="playground" width="800"/>
 
 The architecture of Alympics comprises the Sandbox Playground and Players. The Sandbox Playground creates an environment where game settings, as specified by researchers, are executed. Agent players, along with the optional human players, actively engage in the game within this environment.
 
@@ -20,5 +20,31 @@ The architecture of Alympics comprises the Sandbox Playground and Players. The S
 - The demonstration of Alympics’s application through a comprehensive pilot case study.
 - The emphasis on the significance of leveraging LLM agents to scrutinize strategic decision-making within a controlled and reproducible environment. This endeavor not only enriches the field of game theory but also has the potential to inspire research in other domains where decision-making assumes a pivotal role.
 
-## Code and Examples
-In progress, coming in the near future...
+## Directory Structure
+The code directory structure is
+```
+$src
+ ├─ run.py
+ ├─ Utils.py  # The basic Playground class, the Player class and the LLM API
+ └─ waterAllocation.py # An example of using playground
+```
+**Please complete the configuration of LLM in the Utils.py first.**
+
+
+## Example
+Alympics provides a research platform for conducting experiments on complex strategic gaming problems. As a pilot demonstration, we developed a game called the ’Water Allocation Challenge’ to illustrate how it can be leveraged for game theory research.
+
+The details can be found in our paper.
+
+## Citation
+
+```
+@misc{mao2023alympics,
+      title={ALYMPICS: Language Agents Meet Game Theory}, 
+      author={Shaoguang Mao and Yuzhe Cai and Yan Xia and Wenshan Wu and Xun Wang and Fengyi Wang and Tao Ge and Furu Wei},
+      year={2023},
+      eprint={2311.03220},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
