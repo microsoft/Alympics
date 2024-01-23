@@ -2,7 +2,7 @@
 
 **Alympics** is a platform that leverages Large Language Model (LLM) agents to facilitate investigations in game theory.
 
-See our paper: [<font size=5>ALYMPICS: Language Agents Meet Game Theory</font>](https://arxiv.org/pdf/2311.03220)
+See our paper: [<font size=5>ALYMPICS: LLM Agents Meet Game Theory -- Exploring Strategic Decision-Making with AI Agents</font>](https://arxiv.org/pdf/2311.03220)
 
 ## Architecture of Alympics
 
