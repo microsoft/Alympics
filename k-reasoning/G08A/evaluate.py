@@ -278,6 +278,8 @@ def main(args):
 
     evaluator.win_rate()
     evaluator.adaption_index()
+
+    # the calculation of Prediction Accuracy is used only for pcot and kr.
     # evaluator.prediction_accuracy()
     
 
