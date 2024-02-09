@@ -99,9 +99,9 @@ if __name__=="__main__":
     parser.add_argument('--player_strategy', type=str, default="cot", choices=["agent","cot","pcot","kr","reflect","tot", "persona", "refine", "spp"])
     parser.add_argument('--computer_strategy', type=str,choices=["agent", "fix", "last", "mono", "monorand","cot","pcot","kr","reflect","tot", "persona", "refine", "spp"], default="fix")
     parser.add_argument("--output_dir", type=str, default="result")
-    parser.add_argument('--max_round', type=int, default=5)
+    parser.add_argument('--max_round', type=int, default=10)
     parser.add_argument('--start_exp', type=int, default=0)
-    parser.add_argument('--exp_num', type=int, default=5)
+    parser.add_argument('--exp_num', type=int, default=10)
     parser.add_argument('--player_engine', type=str, default=None, help="player's OpenAI api engine")
     parser.add_argument('--player_k', type=int, default=None, help="player's k-level (default 2)")
 

@@ -309,6 +309,8 @@ def main(args):
     evaluator = SAGEvaluator(args.players, args.opponents, args.result_dir, args.output_dir)
     evaluator.average_survival_round()
     evaluator.adaption_index()
+
+    # the calculation of Prediction Accuracy is used only for pcot and kr.
     # evaluator.prediction_accuracy()
     
 
