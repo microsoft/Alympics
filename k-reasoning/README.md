@@ -42,7 +42,30 @@ Illustration of different methods in the Guessing 0.8 of the Average game.
 - We propose a novel reasoning approach with LLMs - the “K-Level Reasoning” method. It integrates cognitive hierarchy theory into reasoning process, empowering LLMs to recursively predict and respond to the thoughts and actions of rivals in competitive and dynamic scenarios.
 
 ## Codes
-Coming soon...
+
+### Guessing 0.8 of the Average
+
+Play the game and record the results (using K-Level-Reasoning (kr) as the player and Direct (agnet) as the opponent as an example). The game log will be saved in the result folder by default.
+```
+cd G08A
+python main.py  --player_strategy kr --computer_strategy agent --exp_num 1
+```
+Then, perform the calculation of player metrics, which will output the data for the player's `WinRate` and `AdaptionIndex`.
+
+```
+python evaluate.py --players kr --opponents agent
+```
+
+### SurvivalAuctionGame
+
+Play the game and calculate metrics.
+```
+cd SAG
+
+python main.py  --player_strategy kr --computer_strategy agent --exp_num 1
+
+python evaluate.py --players kr --opponents agent
+```
 
 ## Citation
 
