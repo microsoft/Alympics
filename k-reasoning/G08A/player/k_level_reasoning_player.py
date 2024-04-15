@@ -1,11 +1,11 @@
-import openai
 import time
 from copy import deepcopy
+
 
 from .reasoning_player import AgentPlayer
 
 round_number = round
-    
+
 class KLevelReasoningPlayer(AgentPlayer):
     INQUIRY_COT = ("Ok, {name}! Now is the ROUND {round}, and your HP is at {hp}. "
                    "Another game expert's prediction for the next round of other players is as follows: "
@@ -23,8 +23,8 @@ class KLevelReasoningPlayer(AgentPlayer):
                           "Please choose an integer between 1 and 100 for this round.")
     PREDICTION_RESPONSE = "I choose {bidding}."
 
-    def __init__(self, name, persona, engine, players):
-        super().__init__(name, persona, engine)
+    def __init__(self, name, persona, client, players):
+        super().__init__(name, persona, client)
         self.bidding_history = {}
         self.logs = {}
         
@@ -38,7 +38,7 @@ class KLevelReasoningPlayer(AgentPlayer):
     def start_round(self, round):
         prediction = self.predict(round)
         prediction = ", ".join([f"{player} might choose {prediction[player]}"  for player in prediction])+". "
-        self.message += [{"role":"system","content":self.INQUIRY_COT.format(name=self.name, round=round, prediction=prediction, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY_COT.format(name=self.name, round=round, prediction=prediction, hp=self.hp)}]
     
     def notice_round_result(self, round, bidding_info, round_target, win, bidding_details, history_biddings):
         super().notice_round_result(round, bidding_info, round_target, win, bidding_details, history_biddings)
@@ -47,22 +47,16 @@ class KLevelReasoningPlayer(AgentPlayer):
         self.history_biddings = history_biddings #  {"Alex": [1,2,3]}
 
     def predict(self, round):
-
         def self_act(message):
+            window_message = message
+            if self.client.model.startswith("meta-llama"):
+                window = [0]
+                window +=list(range(max(1, len(message)-4*6-1),len(message))) # 4 for window, 6 for round
+                window_message = [message[i] for i in window]
             status = 0
             while status != 1:
                 try:
-                    response = openai.ChatCompletion.create(
-                        engine = self.engine,
-                        messages = message,
-                        temperature=0.7,
-                        max_tokens=800,
-                        top_p=0.95,
-                        frequency_penalty=0, 
-                        presence_penalty=0,
-                        stop=None)
-                    response = response['choices'][0]['message']['content']
-                    self.message.append({"role":"assistant","content":response})
+                    response = self.client.chat_completion(window_message)
                     status = 1
                 except Exception as e:
                     print(e)
@@ -99,7 +93,7 @@ class KLevelReasoningPlayer(AgentPlayer):
                 }]
                 for r in range(len(history_biddings[player])):
                     message.append({
-                        "role": "system",
+                        "role": "user",
                         "content": self.PREDICTION_INQUIRY.format(name=player, round=r+1, hp=hp)
                     })
                     message.append({
@@ -107,12 +101,20 @@ class KLevelReasoningPlayer(AgentPlayer):
                         "content": self.PREDICTION_RESPONSE.format(bidding=history_biddings[player][r])
                     })
                     message.append({
-                        "role": "system",
+                        "role": "user",
                         "content": round_result[r+1]
                     })
                     message.append({
-                        "role": "system",
+                        "role": "assistant",
+                        "content": "I see."
+                    })
+                    message.append({
+                        "role": "user",
                         "content": add_warning(hp, player in round_winner[r+1])
+                    })
+                    message.append({
+                        "role": "assistant",
+                        "content": "Thank you."
                     })
                     if player not in round_winner[r+1]:
                         hp-=1
@@ -120,10 +122,10 @@ class KLevelReasoningPlayer(AgentPlayer):
                 # Predict the opponent's next move based on their historical information.
                 if hp>0:
                     message.append({
-                        "role": "system",
+                        "role": "user",
                         "content": self.PREDICTION_INQUIRY.format(name=player, round=len(history_biddings[player])+1, hp=hp)
                         })
-                    next_bidding = self.agent_simulate(message, engine=self.engine)
+                    next_bidding = self.agent_simulate(message)
                     message.append({
                         "role": "assistant",
                         "content": next_bidding
@@ -138,7 +140,7 @@ class KLevelReasoningPlayer(AgentPlayer):
             # If k-level >= 3, it is necessary to predict future outcomes.
 
             prediction_str = ", ".join([f"{player} might choose {prediction[player]}"  for player in prediction])+". "
-            self_message += [{"role":"system","content":self.INQUIRY_COT.format(name=self.name, round=k_round, prediction=prediction_str, hp=self_hp)}]
+            self_message += [{"role":"user","content":self.INQUIRY_COT.format(name=self.name, round=k_round, prediction=prediction_str, hp=self_hp)}]
             bidding = self_act(self_message)
             prediction = {**{self.name: bidding}, **prediction}
             player_hp[self.name] = self_hp
@@ -191,20 +193,16 @@ class KLevelReasoningPlayer(AgentPlayer):
         return prediction
     
     # @staticmethod
-    def agent_simulate(self, message, engine):
+    def agent_simulate(self, message):
+        window_message = message
+        if self.client.model.startswith("meta-llama"):
+            window = [0]
+            window +=list(range(max(1, len(message)-4*6-1),len(message))) # 4 for window, 6 for round
+            window_message = [message[i] for i in window]
         while 1:
             try:
-                response = openai.ChatCompletion.create(
-                    engine=engine,
-                    messages = message,
-                    temperature=0.7,
-                    max_tokens=80,
-                    top_p=0.9,
-                    frequency_penalty=0,
-                    presence_penalty=0,
-                    stop=None)
-                RESPONSE = response['choices'][0]['message']['content']
-                return RESPONSE
+                response = self.client.chat_completion(window_message)
+                return response
             except Exception as e:
                 print(e)
                 time.sleep(15)
