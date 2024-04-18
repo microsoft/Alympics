@@ -44,6 +44,7 @@ class G08A():
         Average, Target = self.daily_bidding(self.survival_players)
 
         Tie_status = self.check_tie(self.survival_players)
+        WINNER_str = ""
         if Tie_status: # If all players choose the same number, there is no winner.
             WINNER = []
         else:
@@ -93,7 +94,7 @@ class G08A():
         for player in self.survival_players:
             player.end_round()
 
-        print("Round ",round_id,": ",bidding_details)
+        print(f"Round {round_id}: ",bidding_details, " WINNER: "+WINNER_str)
 
     def run_multi_round(self, max_round):
 

@@ -3,6 +3,10 @@ import time
 
 from .basic_player import Player
 
+
+from openai import OpenAI, AzureOpenAI
+
+
 class AgentPlayer(Player):
     is_agent=True
     GAME_SETTING = ("SURVIVE CHALLENGE!!! You are one of five players in the game. "
@@ -23,9 +27,9 @@ class AgentPlayer(Player):
     INQUIRY = ("Ok, {name}! Now is the ROUND {round}, and your HP is at {hp}. "
                "Please choose an integer between 1 and 100 for this round.")
     
-    def __init__(self, name, persona, engine):
+    def __init__(self, name, persona, client):
         self.name = name
-        self.engine = engine
+        self.client = client
         self.hp = 10
 
         self.biddings = []
@@ -34,21 +38,32 @@ class AgentPlayer(Player):
 
         self.logs = None
 
+
+        self.parse_client = AzureOpenAI(
+            api_key="",
+            api_version="",
+            azure_endpoint=""
+        )
+        self.parse_engine = ""
+    
+    @property
+    def window_message(self):
+        if self.client.model.startswith("meta-llama"):
+            window = [0]
+            window +=list(range(max(1, len(self.message)-4*6-1),len(self.message))) # 4 for window, 6 for round
+            message = [self.message[i] for i in window]
+            return message
+        else:
+            return self.message
+        
+
     def act(self):
         print(f"Player {self.name} conduct bidding")
         status = 0
         while status != 1:
             try:
-                response = openai.ChatCompletion.create(
-                    engine = self.engine,
-                    messages = self.message,
-                    temperature=0.7,
-                    max_tokens=800,
-                    top_p=0.95,
-                    frequency_penalty=0, 
-                    presence_penalty=0,
-                    stop=None)
-                response = response['choices'][0]['message']['content']
+                response = self.client.chat_completion(messages = self.window_message)
+                # response = response.choices[0].message.content
                 self.message.append({"role":"assistant","content":response})
                 status = 1
             except Exception as e:
@@ -57,24 +72,27 @@ class AgentPlayer(Player):
         self.biddings.append(self.parse_result(response))
 
     def parse_result(self, message):
+
         status = 0
         times = 0
         while status != 1:
             try:
-                response = openai.ChatCompletion.create(
-                    engine=self.engine,
-                    messages = [{"role":"system", "content":"By reading the conversation, extract the number chosen by player. Output format: number"}, {"role": "user", "content": message}],
+                response = self.parse_client.chat.completions.create(
+                    # engine=self.engine,
+                    model = parse_engine,
+                    messages = [{"role":"system", "content":"By reading the conversation, extract the number chosen by player. Output format: number"}, {"role": "user", "content": text}],
                     temperature=0.7,
-                    max_tokens=800,
+                    max_tokens=80,
                     top_p=0.95,
                     frequency_penalty=0,
                     presence_penalty=0,
                     stop=None)
-                response = response['choices'][0]['message']['content']
-                assert response.isnumeric(), "Not A Number: "+ message
+                response = response.choices[0].message.content
+                # response = response
+                assert response.isnumeric(), "Not A Number: "+ text
                 bidding_info = int(float(response))
                 status = 1
-                return bidding_info
+                return str(bidding_info)
             except AssertionError as e:
                 print("Result Parsing Error: ",e)
                 times+=1
@@ -83,18 +101,20 @@ class AgentPlayer(Player):
             except Exception as e:
                 print(e)
                 time.sleep(15)
-
+        # 返回结果
         return None
     
     def start_round(self, round):
-        self.message += [{"role":"system","content":self.INQUIRY.format(name=self.name, round=round, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY.format(name=self.name, round=round, hp=self.hp)}]
+        self.cur_round = round
         
     def notice_round_result(self, round, bidding_info, round_target, win, bidding_details, history_biddings):
         self.message_update_result(bidding_info)
         self.message_update_warning(win)
     
     def message_update_result(self, bidding_info):
-        self.message += [{"role":"system","content":bidding_info}]
+        self.message += [{"role":"user","content":bidding_info}]
+        self.message += [{"role":"assistant","content":"I see."}]
     
     def message_update_warning(self, win):
         def add_warning():
@@ -106,14 +126,15 @@ class AgentPlayer(Player):
                 return f"WARNING: You have lost 1 point of HP in this round! You now have only {self.hp} points of health left. You are one step closer to death.  "
             return "You have successfully chosen the number closest to the target number, which is the average of all players' selected numbers multiplied by 0.8. As a result, you have won this round. All other players will now deduct 1 HP. "
         
-        self.message += [{"role":"system","content": add_warning()}]
+        self.message += [{"role":"user","content": add_warning()}]
+        self.message += [{"role":"assistant","content":"Thank you."}]
 
     def conduct_inquiry(self, inquiry):
         while 1:
             try:
                 response = openai.ChatCompletion.create(
                     engine=self.engine,
-                    messages = self.message + [{"role":"system","content":inquiry}],
+                    messages = self.message + [{"role":"user","content":inquiry}],
                     temperature=0.7,
                     max_tokens=800,
                     top_p=0.9,
@@ -133,7 +154,7 @@ class CoTAgentPlayer(AgentPlayer):
                    "Guess which number will win in the next round. Let's think step by step, and finally answer a number you think you can win.")
 
     def start_round(self, round):
-        self.message += [{"role":"system","content":self.INQUIRY_COT.format(name=self.name, round=round, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY_COT.format(name=self.name, round=round, hp=self.hp)}]
 
 
 class PersonaAgentPlayer(AgentPlayer):
@@ -148,10 +169,10 @@ class PersonaAgentPlayer(AgentPlayer):
     def __init__(self, name, persona, engine):
         super().__init__(name, persona, engine)
         self.persona = self.MATH_EXPERT_PERSONA.format(name=name)
-        self.message = [{"role":"system","content": self.persona + self.GAME_SETTING.format(NAME=self.name)}]
+        self.message = [{"role":"user","content": self.persona + self.GAME_SETTING.format(NAME=self.name)}]
 
     def start_round(self, round):
-        self.message += [{"role":"system","content":self.INQUIRY_PERSONA.format(name=self.name, round=round, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY_PERSONA.format(name=self.name, round=round, hp=self.hp)}]
 
 
 class ReflectionAgentPlayer(AgentPlayer):
@@ -163,7 +184,7 @@ class ReflectionAgentPlayer(AgentPlayer):
 
     def reflect(self):
         print(f"Player {self.name} conduct reflect")
-        self.message += [{"role":"system","content": self.REFLECT_INQUIRY}, {"role":"assistant","content":self.conduct_inquiry(self.REFLECT_INQUIRY)}]  
+        self.message += [{"role":"user","content": self.REFLECT_INQUIRY}, {"role":"assistant","content":self.conduct_inquiry(self.REFLECT_INQUIRY)}]  
 
 
 class SelfRefinePlayer(AgentPlayer):
@@ -209,11 +230,11 @@ class SelfRefinePlayer(AgentPlayer):
         for t in range(self.refine_times):
             # refine_times==action_times
             if t==0:
-                self.message.append({"role":"system","content":self.INQUIRY_COT.format(name=self.name, round=self.cur_round, hp=self.hp)})
+                self.message.append({"role":"user","content":self.INQUIRY_COT.format(name=self.name, round=self.cur_round, hp=self.hp)})
             else:
                 refine_message = []
                 for m in self.message:
-                    if m["role"]=="system":
+                    if m["role"]=="user":
                         refine_message.append(m)
                     else:
                         refine_message.append({
@@ -221,11 +242,11 @@ class SelfRefinePlayer(AgentPlayer):
                             "content": m["content"]
                         })
                 refine_message.append({
-                        "role": "system",
+                        "role": "user",
                         "content": self.FEEDBACK_PROMPT
                     })
                 feedback = completion(refine_message)
-                self.message.append({"role":"system","content": self.REFINE_PROMPT.format(feedback=feedback)})
+                self.message.append({"role":"user","content": self.REFINE_PROMPT.format(feedback=feedback)})
             self.message.append({"role":"assistant","content": completion(self.message)})
         
         self.biddings.append(self.parse_result(self.message[-1]["content"]))
@@ -257,7 +278,7 @@ class PredictionCoTAgentPlayer(AgentPlayer):
         else:
             round_history = ""
 
-        self.message += [{"role":"system","content":self.INQUIRY_COT.format(name=self.name, round=round,round_history=round_history, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY_COT.format(name=self.name, round=round,round_history=round_history, hp=self.hp)}]
     
     def notice_round_result(self, round, bidding_info, round_target, win, bidding_details, history_biddings):
         super().notice_round_result(round, bidding_info, round_target, win, bidding_details, history_biddings)
@@ -301,8 +322,8 @@ Final answer: 6 * (1 + 1) + 12 = 24
     def __init__(self, name, persona, engine):
         super().__init__(name, persona, engine)
         self.persona = self.PERSONA.format(name=name)
-        self.message = [{"role":"system","content": self.SPP_EXAMPLE.format(name=self.name)},
-                        {"role":"system","content": self.persona + self.GAME_SETTING.format(NAME=self.name)}]
+        self.message = [{"role":"user","content": self.SPP_EXAMPLE.format(name=self.name)},
+                        {"role":"user","content": self.persona + self.GAME_SETTING.format(NAME=self.name)}]
 
     def start_round(self, round):
-        self.message += [{"role":"system","content":self.INQUIRY_SPP.format(name=self.name, round=round, hp=self.hp)}]
+        self.message += [{"role":"user","content":self.INQUIRY_SPP.format(name=self.name, round=round, hp=self.hp)}]

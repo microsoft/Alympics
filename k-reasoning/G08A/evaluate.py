@@ -77,7 +77,7 @@ class G08AEvaluator():
                         logs = json.load(fin)
                         exp_ground = logs["biddings"]
                     target_div = []
-                    for r in range(0, 10):
+                    for r in range(0, self.exp_rnd):
                         bids = [exp_ground[p][r] for p in exp_ground]
                         target = sum(bids)/len(bids)*0.8
                         player_bid = exp_ground["Alex"][r]
@@ -228,7 +228,7 @@ class G08AEvaluator():
                     logs = json.load(fin)
                     exp_ground = logs["biddings"]
                     result = logs["logs"]["Alex"]
-                for r in range(0, 10):
+                for r in range(0, self.exp_rnd):
                     try:
                         prediction = result[f'round{r+1}']["prediction"]
                     except:
@@ -242,9 +242,9 @@ class G08AEvaluator():
 
             #Export the prediction accuracy chart.
 
-            x = [f"R{i+1}" for i in range(10)]
-            y1 = [sum(pcot_avg_div[r])/len(pcot_avg_div[r]) for r in range(10)]
-            y2 = [sum(kr_avg_div[r])/len(kr_avg_div[r])  for r in range(10)]
+            x = [f"R{i+1}" for i in range(self.exp_rnd)]
+            y1 = [sum(pcot_avg_div[r])/len(pcot_avg_div[r]) for r in range(self.exp_rnd)]
+            y2 = [sum(kr_avg_div[r])/len(kr_avg_div[r])  for r in range(self.exp_rnd)]
 
             # Create the plot
             plt.figure(figsize=(4, 3))
