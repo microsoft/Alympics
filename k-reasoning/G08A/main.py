@@ -5,33 +5,63 @@ from player import *
 from game import G08A
 
 # Fill in your config information to conduct experiments.
-openai.api_type = ""
-openai.api_base = ""
-openai.api_version = ""
-openai.api_key = ""
 
-ENGINE = "gpt4-32k"
+class LLMClient:
+    def __init__(self, client, model) -> None:
+        self.client = client
+        self.model = model
+    
+    def chat_completion(self, messages, temperature=0.7, max_tokens=800, top_p=0.95, frequency_penalty=0,  presence_penalty=0, stop=None):
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages = messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty, 
+            presence_penalty=presence_penalty,
+            stop=stop
+        )
+        response = response.choices[0].message.content
+        return response
 
-def build_player(strategy, name, persona, mean=50, std=0, player_names = []):
+def build_client(model):
+    if model in ["gpt35prod", "gpt4-32k"]:
+        client = AzureOpenAI(
+            api_key="",
+            api_version="",
+            azure_endpoint=""
+        )
+    else:
+        client = OpenAI(
+            base_url="",
+            api_key=""
+        )
+    return LLMClient(client, model)
+
+def build_player(strategy, name, persona, model, mean=50, std=0, player_names = []):
     """
     Player Factory
     """
+
+    llm_client = build_client(model)
+
     if strategy=="agent":
-        return AgentPlayer(name, persona, ENGINE)
+        return AgentPlayer(name, persona, llm_client)
     elif strategy=="cot":
-        return CoTAgentPlayer(name, persona, ENGINE)
+        return CoTAgentPlayer(name, persona, llm_client)
     elif strategy=="persona":
-        return PersonaAgentPlayer(name, persona, ENGINE)
+        return PersonaAgentPlayer(name, persona, llm_client)
     elif strategy=="reflect":
-        return ReflectionAgentPlayer(name, persona, ENGINE)
+        return ReflectionAgentPlayer(name, persona, llm_client)
     elif strategy=="refine":
-        return SelfRefinePlayer(name, persona, ENGINE)
+        return SelfRefinePlayer(name, persona, llm_client)
     elif strategy=="pcot":
-        return PredictionCoTAgentPlayer(name, persona, ENGINE)
+        return PredictionCoTAgentPlayer(name, persona, llm_client)
     elif strategy=="kr":
-        return KLevelReasoningPlayer(name, persona, ENGINE, player_names)
+        return KLevelReasoningPlayer(name, persona, llm_client, player_names)
     elif strategy=="spp":
-        return SPPAgentPlayer(name, persona, ENGINE)
+        return SPPAgentPlayer(name, persona, llm_client)
     elif strategy in ["fix", "last", "mono", "monorand"]:
         return ProgramPlayer(name, strategy, mean, std)
     else:
@@ -51,15 +81,15 @@ def main(args):
         player_names = ["Alex", "Bob", "Cindy", "David", "Eric"]
 
         # build player
-        A = build_player(args.player_strategy, "Alex", PERSONA_A, player_names=player_names)
+        A = build_player(args.player_strategy, "Alex", PERSONA_A, args.player_model, player_names=player_names)
         # Modify PlayerA's settings for ablation experiments.
-        if args.player_engine: A.engine = args.player_engine
+        # if args.player_engine: A.engine = args.player_engine
         if args.player_k:  A.k_level = args.player_k
         players.append(A)
 
         # build opponent
         for program_name, persona in [("Bob", PERSONA_B), ("Cindy", PERSONA_C), ("David", PERSONA_D), ("Eric", PERSONA_E)]:
-            players.append(build_player(args.computer_strategy, program_name, persona, args.init_mean, args.norm_std, player_names=player_names))
+            players.append(build_player(args.computer_strategy, program_name, persona, args.computer_model, args.init_mean, args.norm_std, player_names=player_names))
 
         # run multi-round game (default 10)
         Game = G08A(players)
@@ -105,7 +135,10 @@ if __name__=="__main__":
     parser.add_argument('--max_round', type=int, default=10)
     parser.add_argument('--start_exp', type=int, default=0)
     parser.add_argument('--exp_num', type=int, default=10)
-    parser.add_argument('--player_engine', type=str, default=None, help="player's OpenAI api engine")
+    parser.add_argument('--player_model', type=str, default="gpt35prod", help="player's OpenAI api engine", 
+                        choices=["gpt35prod", "gpt4-32k", "meta-llama/Llama-2-7b-chat-hf"])
+    parser.add_argument('--computer_model', type=str, default="gpt35prod", help="player's OpenAI api engine", 
+                        choices=["gpt35prod", "gpt4-32k", "meta-llama/Llama-2-7b-chat-hf"])
     parser.add_argument('--player_k', type=int, default=None, help="player's k-level (default 2)")
 
     args = parser.parse_args()
