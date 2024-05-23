@@ -1,7 +1,7 @@
 import json
 import logging
 from random import randint
-from Utils import PlayGround, Player, LLM
+from Alympics import PlayGround, Player, LLM
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -10,7 +10,7 @@ class myPlayer(Player):
     def __init__(self, game_setting, name, water_requirement, daily_salary, if_persona, persona):
         super().__init__(name, if_persona, persona)
         
-        # Personal Information
+        # Personal Information, Player Status
         self.requirement = water_requirement
         self.daily_salary = daily_salary
         self.balance = 0
@@ -68,7 +68,6 @@ class myPlayer(Player):
         return f"NAME:{self.name}\tBALANCE:{self.balance}\tHEALTH POINT:{self.hp}\tNO_DRINK:{self.no_drink}"
 
 
-
 class waterAllocation(PlayGround):
     def __init__(self, game_setting) -> None:
         super().__init__()
@@ -90,14 +89,15 @@ class waterAllocation(PlayGround):
         logger.info("Initial players done.")
         
         self.survival_players = self.players
-
-        # Prompts
-        self.parse_result_prompt = "By reading the conversation, extract the bidding price chosen by each player in json format. Output format:{\"Alex\": Alex's bidding price, \"Bob\": Bob's bidding price, \"Cindy\": Cindy's bidding price, \"David\": David's bidding price, \"Eric\": Eric's bidding price}"
+        
+        self.parse_result_prompt = "By reading the conversation, extract the bidding price chosen by each player in an exact json format. Please note the bidding price should be an integer. Output format:\n\n{\"Alex\": Alex's bidding price, \"Bob\": Bob's bidding price, \"Cindy\": Cindy's bidding price, \"David\": David's bidding price, \"Eric\": Eric's bidding price}"
         self.round_results_prompt = "Thank you all for participating in Round {}. In this round, {}.\nTotal water resource supply is {}. According to the principle of the highest bidder and the rule of prioritizing low-demand individuals when the game is tied, {} won this auction and obtain water resource. After allocation, all survival residents' information is as follows: {}"
         
+        self.experiment_unique_id = str(randint(10000000, 99999999))
         # Initial a no-memory LLM
         self.llm = LLM()
 
+    # The following functions are categorized into Environment codes. These codes establish the game’s rules, ensuring a consistent and reliable framework for experiments.
     def _get_salary(self):
         for player in self.survival_players:
             player.get_salary()
@@ -132,11 +132,15 @@ class waterAllocation(PlayGround):
     
     def _parse_result(self, round_info):
         messages = [{"role": "system", "content": self.parse_result_prompt}, {"role": "user", "content": round_info}]
-        try:
-            res = self.llm.call(messages)
-            res = json.loads(res)
-        except Exception as e:
-            logger.error(e)
+        attempts = 0
+        while attempts < 3:
+            try:
+                res = self.llm.call(messages)
+                res = json.loads(res)
+                return res
+            except Exception as e:
+                logger.error(e)
+            attempts += 1
         return res
 
     def run_single_round(self, round_id, supply):
@@ -218,4 +222,4 @@ class waterAllocation(PlayGround):
         for i in range(1, n_round+1):
             self.run_single_round(i, supply_list[i-1])
         
-        self._save_history('./log.json') # change the log dirction here
+        self._save_history(f'./{self.experiment_unique_id}.json') # change the log dirction here
